@@ -9,7 +9,7 @@ Currently incompleted.
 **Functions**
 - void SearchTitleIDs()
 - void SetRegions()
----
+___
 ##### Class NinjaSamurai.cs
 **Functions**
 - string GetNSUID(string tid)
@@ -18,12 +18,12 @@ Currently incompleted.
  * Get Seed and Size from a specific TitleID as Tuple (string seed, string size)
 - void SetMetadata(Title oldTitle, out Title newTitle)
  * Set (Demo)Title, Publisher, Serial of a Title
----
+___
 ##### Class IconRetriever.cs
 **Functions**
 - string GetRegion(string TitleID)
  * Returns Region as string (JP, US, GB, HK, KR, TW, ALL)
----
+___
 ##### Class Title.cs
 **Variables**
 - string Name
