@@ -4,10 +4,10 @@ Tool to get current 3DS eShop Titles from Nintendo
 Currently incompleted. Not further plan to continue this project. Feel free to fork and continue this.
 
 To-Do List
--[ ] Check Availablility of Titles
--[ ] Set Titlename, Publisher via IDBE when Title isn't on Samurai
--[ ] Set Metadata of an Title via Samurai
--[ ] Save Database as .json/.xml
+- [ ] Check Availablility of Titles
+- [ ] Set Titlename, Publisher via IDBE when Title isn't on Samurai
+- [ ] Set Metadata of an Title via Samurai
+- [ ] Save Database as .json/.xml
 
 #### Important Classes
 
