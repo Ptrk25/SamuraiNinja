@@ -6,13 +6,11 @@ Currently incompleted.
 #### Important Classes
 
 ##### Class DatabaseCreator.cs
-
 **Functions**
 - void SearchTitleIDs()
 - void SetRegions()
 
 ##### Class NinjaSamurai.cs
-
 **Functions**
 - string GetNSUID(string tid)
  * Get NSUID from TitleID as String
@@ -22,13 +20,11 @@ Currently incompleted.
  * Set (Demo)Title, Publisher, Serial of a Title
 
 ##### Class IconRetriever.cs
-
 **Functions**
 - string GetRegion(string TitleID)
  * Returns Region as string (JP, US, GB, HK, KR, TW, ALL)
 
 ##### Class Title.cs
-
 **Variables**
 - string Name
 - string Publisher
