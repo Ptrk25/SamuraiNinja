@@ -1,22 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SamuraiNinja
 {
     class DatabaseCreator
     {
         private List<Title> titles = new List<Title>();
+        private List<Title> failed_titles = new List<Title>();
         private List<Tuple<string, string>> types = new List<Tuple<string, string>>();
 
         private uint title_num = 0x30000;
         private ushort num_threads = 0;
         private uint curr_num = 0;
         private uint failed = 0;
-        private readonly ushort MAX_TITLES = 15000;
+        private readonly ushort MAX_TITLES = 30000;
         private readonly ushort MAX_THREADS = 15;
         private uint listsize = 0;
 
@@ -31,9 +30,9 @@ namespace SamuraiNinja
         //Search for TitleIDs
         public void SearchTitleIDs()
         {
-            failed = 0;
+            updateMenu();
 
-            Console.WriteLine("Searching for TitleIDs via Ninja... (45000 TitleIDs)\n");
+            Console.WriteLine(string.Format("Searching for TitleIDs via Ninja... ({0} TitleIDs)\n", (MAX_TITLES*3)));
             foreach (Tuple<string, string> type in types)
             {
                 if (type.Item1.Equals("Demo"))
@@ -47,22 +46,26 @@ namespace SamuraiNinja
                 {
                     //Theads in Liste!!
                     NinjaWorker ninjaw = new NinjaWorker(title_num, (uint)(MAX_TITLES/(MAX_THREADS/3)), type.Item1, new TitlelistCallback(ProcessThreadTitles), new CurrentStatusCallback(ProcessThreadCounter), new FailCallback(ProcessFailCounter));
+
                     Thread t = new Thread(new ThreadStart(ninjaw.GetNSUIDs));
                     t.Start();
                     title_num += (uint) (MAX_TITLES / (MAX_THREADS / 3))*0x100 + 0x100;
+
                     Console.WriteLine(string.Format("Thread started! Type: {0} {1}",type.Item1, i));
                 }
                 
             }
             Console.WriteLine();
             while (num_threads > 0) { Thread.Sleep(1000); }
-            Console.WriteLine(string.Format("\nFound {0} TitleIDs on Ninja!\n", titles.Count));
+            Console.WriteLine(string.Format("\n\nFound {0} TitleIDs on Ninja!\n", titles.Count));
+            Thread.Sleep(1000);
         }
 
         //Get Regions for TitleIDs
         public void SetRegions()
         {
             failed = 0;
+            updateMenu();
 
             Console.WriteLine(string.Format("Setting Regions for {0} TitleIDs via IDBE...\n", titles.Count));
 
@@ -85,8 +88,97 @@ namespace SamuraiNinja
             }
             Console.WriteLine();
             while (num_threads > 0) { Thread.Sleep(1000); }
-            Console.WriteLine("\nRegions setted!");
+            Console.WriteLine("\n\nRegions setted!\n");
+            Thread.Sleep(1000);
            
+        }
+
+        //Sets Metadata for each Title
+        public void SetMetadata()
+        {
+            failed = 0;
+            updateMenu();
+
+            Console.WriteLine(string.Format("Setting Metadata for {0} TitleIDs via Samurai...\n", titles.Count));
+            var lltitles = new List<List<Title>>();
+            lltitles = SplitList<Title>(titles, 400);
+            num_threads = (ushort) lltitles.Count;
+            int i = 0;
+            listsize = (uint)titles.Count;
+
+            titles.Clear();
+            curr_num = 0;
+
+            foreach(List<Title> partlist in lltitles)
+            {
+                SamuraiWorker samuw = new SamuraiWorker(partlist, new TitlelistCallback(ProcessThreadTitles), new CurrentStatusCallback(ProcessIDBECounter), new FailCallback(ProcessFailCounter));
+                Thread t = new Thread(new ThreadStart(samuw.SetMetadata));
+                t.Start();
+                Console.WriteLine(string.Format("Thread started! Count: {0}", i));
+                i++;
+            }
+            Console.WriteLine();
+            while (num_threads > 0) { Thread.Sleep(1000); }
+            Console.WriteLine("\n\nMetadata setted!\n");
+            Thread.Sleep(1000);
+        }
+
+        //Gets Seed and Size of an Title
+        public void SetSeedAndSize()
+        {
+            failed = 0;
+            updateMenu();
+
+            Console.WriteLine(string.Format("Setting Seed and Size for {0} TitleIDs via Ninja...\n", titles.Count));
+            var lltitles = new List<List<Title>>();
+            lltitles = SplitList<Title>(titles, 400);
+            num_threads = (ushort)lltitles.Count;
+            int i = 0;
+            listsize = (uint)titles.Count;
+
+            titles.Clear();
+            curr_num = 0;
+
+            foreach (List<Title> partlist in lltitles)
+            {
+                SamuraiWorker ninjw = new SamuraiWorker(partlist, new TitlelistCallback(ProcessThreadTitles), new CurrentStatusCallback(ProcessIDBECounter), new FailCallback(ProcessFailCounter));
+                Thread t = new Thread(new ThreadStart(ninjw.SetSeedAndSize));
+                t.Start();
+                Console.WriteLine(string.Format("Thread started! Count: {0}", i));
+                i++;
+            }
+            Console.WriteLine();
+            while (num_threads > 0) { Thread.Sleep(1000); }
+            Console.WriteLine("\n\nSeed and Size setted!\n");
+            Thread.Sleep(1000);
+            updateMenu();
+        }
+
+        //Return function
+        public List<Title> GetTitles()
+        {
+            return titles;
+        }
+
+        public List<Title> GetFailedTitles()
+        {
+            return failed_titles;
+        }
+
+        //Menu
+        private void updateMenu()
+        {
+            Console.Clear();
+            Console.WriteLine("3DS Title Database Creator\n");
+            Console.WriteLine(" --------------------------------");
+            Console.WriteLine(string.Format(" | Titles:  {0}", titles.Count));
+            Console.WriteLine(string.Format(" | Failed:  {0}", failed_titles.Count));
+            Console.SetCursorPosition(32,3);
+            Console.Write("|");
+            Console.SetCursorPosition(32, 4);
+            Console.Write("|");
+            Console.SetCursorPosition(0, 5);
+            Console.WriteLine(" --------------------------------\n");
         }
 
         //Threadfunctions
@@ -108,8 +200,12 @@ namespace SamuraiNinja
             Console.Write(string.Format("\r{0} of {1} completed ({2} failed) ({3:0.00} %)", curr_num, listsize, failed, (float)curr_num / (float) listsize * 100));
         }
 
-        private void ProcessFailCounter()
+        private void ProcessFailCounter(Title title)
         {
+            if(title != null)
+            {
+                failed_titles.Add(title);
+            }
             failed++;
         }
 

@@ -47,7 +47,7 @@ namespace SamuraiNinja
                 else
                 {
                     callint();
-                    callfail();
+                    callfail(null);
                     //Console.WriteLine(string.Format("TID: {0}   NSIUD: None            Type: {1}", title_id, type));
                 }
                     
@@ -62,4 +62,4 @@ public delegate void TitlelistCallback(List<SamuraiNinja.Title> titles);
 
 public delegate void CurrentStatusCallback();
 
-public delegate void FailCallback();
+public delegate void FailCallback(SamuraiNinja.Title title);

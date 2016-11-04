@@ -17,19 +17,18 @@ namespace SamuraiNinja
     public class NinjaSamurai
     {
         private readonly ushort MAX_TRIES = 10;
+        private X509Certificate2 certificate;
 
         public NinjaSamurai()
         {
             ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
+            X509Certificate2Collection cers = new X509Certificate2Collection();
+            cers.Import("ctr-common.pfx", "123456", X509KeyStorageFlags.PersistKeySet);
+            certificate = cers[0];
         }
 
         public string GetNSUID(string tid)
         {
-            X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-            store.Open(OpenFlags.ReadOnly);
-
-            X509Certificate2 certificate = store.Certificates[0];
-
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create("https://ninja.ctr.shop.nintendo.net/ninja/ws/titles/id_pair?title_id[]=" + tid);
             req.ClientCertificates.Add(certificate);
 
@@ -68,14 +67,11 @@ namespace SamuraiNinja
             return result;
         }
 
-        public Tuple<string,string> GetSeedAndSize(string tid)
+        public void SetSeedAndSize(Title title, out Title new_Title)
         {
-            X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-            store.Open(OpenFlags.ReadOnly);
+            new_Title = title;
 
-            X509Certificate2 certificate = store.Certificates[0];
-
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create("https://ninja.ctr.shop.nintendo.net/ninja/ws/DE/title/" + tid + "/ec_info");
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(string.Format("https://ninja.ctr.shop.nintendo.net/ninja/ws/GB/title/{0}/ec_info", title.NSUID));
             req.ClientCertificates.Add(certificate);
 
             req.UserAgent = "API Client";
@@ -84,11 +80,20 @@ namespace SamuraiNinja
 
             string result = "";
 
-            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+            try
             {
-                StreamReader reader = new StreamReader(resp.GetResponseStream());
-                result = reader.ReadToEnd();
+                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                {
+                    StreamReader reader = new StreamReader(resp.GetResponseStream());
+                    result = reader.ReadToEnd();
+                }
+            } catch (Exception e)
+            {
+                new_Title.Size = null;
+                new_Title.Seed = null;
+                return;
             }
+            
 
             XDocument doc = XDocument.Parse(result);
             var dSize = doc.Descendants("content_size");
@@ -103,7 +108,12 @@ namespace SamuraiNinja
             {
                 Seed = sSeed.Value;
             }
-            return Tuple.Create(Seed,Size);
+
+            if (Seed == null)
+                Seed = "none";
+                
+            new_Title.Seed = Seed;
+            new_Title.Size = Size;
         }
 
         public void SetMetadata(Title oldTitle, out Title newTitle)
@@ -112,9 +122,29 @@ namespace SamuraiNinja
             newTitle.Region = oldTitle.Region;
             newTitle.Size = oldTitle.Size;
             newTitle.Seed = oldTitle.Seed;
+            
+            string xml = "";
 
-            WebClient client = new WebClient();
-            string xml = client.DownloadString(string.Format("https://samurai.ctr.shop.nintendo.net/samurai/ws/{0}/title/{1}", oldTitle.Region, newTitle.NSUID));
+            for(int i = 0; i < 10; i++)
+            {
+                try
+                {
+                    WebClient client = new WebClient();
+                    xml = client.DownloadString(string.Format("https://samurai.ctr.shop.nintendo.net/samurai/ws/{0}/title/{1}", oldTitle.Region, newTitle.NSUID));
+                    break;
+                }
+                catch (WebException e)
+                {
+
+                }
+            }
+
+            if(xml.Equals(""))
+            {
+                newTitle.Name = "";
+                return;
+            }
+
 
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(xml);

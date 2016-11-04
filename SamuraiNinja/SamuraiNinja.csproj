@@ -59,12 +59,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DatabaseCreator.cs" />
+    <Compile Include="FileCreator.cs" />
     <Compile Include="IconRetriever.cs" />
     <Compile Include="IDBEWorker.cs" />
+    <Compile Include="Menu.cs" />
     <Compile Include="NinjaSamurai.cs" />
     <Compile Include="NinjaWorker.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SamuraiWorker.cs" />
     <Compile Include="Title.cs" />
   </ItemGroup>
   <ItemGroup>

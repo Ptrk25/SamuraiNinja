@@ -30,11 +30,13 @@ namespace SamuraiNinja
             this.callfail = callfail;
         }
 
-        public string GetRegion(String TitleID)
+        public void SetRegion(Title title, out Title newTitle)
         {
-            string address = string.Format("https://idbe-ctr.cdn.nintendo.net/icondata/10/{0}.idbe", TitleID);
-            byte[] data;
+            string address = string.Format("https://idbe-ctr.cdn.nintendo.net/icondata/10/{0}.idbe", title.TitleID);
+            byte[] data = null;
             regions.Clear();
+
+            newTitle = title;
 
             try
             {
@@ -44,8 +46,9 @@ namespace SamuraiNinja
             catch (WebException)
             {
                 //Console.WriteLine("[Icon]: Unable to find requested TitleID.");
-                callfail();
-                return null;
+                callfail(title);
+                newTitle = null;
+                return;
             }
 
             byte[] Encrypted = new byte[data.Length - 2];
@@ -63,25 +66,32 @@ namespace SamuraiNinja
                     switch (i)
                     {
                         case 0:
-                            return "JP";
+                            newTitle.Region = "JP";
+                            break;
                         case 1:
-                            return "US";
+                            newTitle.Region = "US";
+                            break;
                         case 2:
-                            return "GB";
+                            newTitle.Region = "GB";
+                            break;
                         case 3:
-                            return "GB";
+                            newTitle.Region = "GB";
+                            break;
                         case 4:
-                            return "HK";
+                            newTitle.Region = "HK";
+                            break;
                         case 5:
-                            return "KR";
+                            newTitle.Region = "KR";
+                            break;
                         case 6:
-                            return "TW";
+                            newTitle.Region = "TW";
+                            break;
                         default:
-                            return "ALL";
+                            newTitle.Region = "ALL";
+                            break;
                     }
                 }
             }
-            return null;
         }
 
         private byte[] AESDecrypt(byte[] Encrypted, byte[] key, byte[] iv)

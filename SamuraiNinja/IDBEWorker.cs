@@ -9,6 +9,7 @@ namespace SamuraiNinja
     class IDBEWorker
     {
         private List<Title> titles;
+        private List<Title> new_titles = new List<Title>();
         private TitlelistCallback calllist;
         private CurrentStatusCallback callint;
         private FailCallback callfail;
@@ -27,14 +28,16 @@ namespace SamuraiNinja
 
             for (ushort i = 0; i < titles.Count; i++)
             {
-                titles[i].Region = icon.GetRegion(titles[i].TitleID);
-                
-                if (titles[i].Region == null)
-                    titles[i].Available = false;
+                Title newTitle;
+                icon.SetRegion(titles[i], out newTitle);
 
+                if (newTitle != null)
+                {
+                    new_titles.Add(newTitle);
+                }
                 callint();
             }
-            calllist(titles);
+            calllist(new_titles);
         }
     }
 }

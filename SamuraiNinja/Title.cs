@@ -7,7 +7,6 @@
             this.TitleID = TitleID;
             this.NSUID = NSUID;
             this.Type = Type;
-            this.Available = null;
         }
 
         public string Name { get; set; }
@@ -19,6 +18,5 @@
         public string NSUID { get; set; }
         public string Seed { get; set; }
         public string Size { get; set; }
-        public bool? Available { get; set; }
     }
 }
